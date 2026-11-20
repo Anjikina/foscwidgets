@@ -65,4 +65,4 @@ Na een push naar `main` of een handmatige start onder **Actions → Android APK 
 
 ## Eerste versie
 
-Versie 0.2.1. De startschermformaten en compacte weergave zijn op een Android 15-emulator gecontroleerd. De volledige selectie en het openen van een Samsung-notitie worden aanvullend op de S24 gecontroleerd. Zeer kleine widgets en lange notities kunnen tekst afkappen; de widget is in beide richtingen schaalbaar.
+Versie 0.2.2. De startschermformaten en compacte weergave zijn op een Android 15-emulator gecontroleerd. De volledige selectie en het openen van een Samsung-notitie worden aanvullend op de S24 gecontroleerd. Zeer kleine widgets en lange notities kunnen tekst afkappen; de widget is in beide richtingen schaalbaar.
