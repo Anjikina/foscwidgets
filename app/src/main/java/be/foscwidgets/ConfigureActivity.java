@@ -23,7 +23,7 @@ public class ConfigureActivity extends Activity {
         super.onCreate(b);
         setResult(RESULT_CANCELED);
         widgetId=getIntent().getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,AppWidgetManager.INVALID_APPWIDGET_ID);
-        int[] ids=AppWidgetManager.getInstance(this).getAppWidgetIds(new ComponentName(this,WidgetProvider.class));
+        int[] ids=WidgetProvider.allIds(this);
         boolean valid=false; for(int id:ids) if(id==widgetId) valid=true;
         if(!valid) { finish(); return; }
         try { data=b!=null?new JSONObject(b.getString("draft")):Store.get(this,widgetId); } catch(Exception e) { data=Store.get(this,widgetId); }
@@ -46,18 +46,19 @@ public class ConfigureActivity extends Activity {
         for(int i=0;i<a.length();i++) {
             JSONObject o=a.optJSONObject(i); if(o==null) continue;
             final int index=i;
-            String type=o.optString("type"); String kind="app".equals(type)?"App":"web".equals(type)?"Website":"file".equals(type)?"Bestand":"Notitie";
+            String type=o.optString("type"); String kind="app".equals(type)?"App":"web".equals(type)?"Website":"file".equals(type)?"Bestand":"shortcut".equals(type)?"Bestaande notitie":"Notitie";
             Ui.button(this,p,(i+1)+". "+o.optString("label")+" · "+kind,v -> { capture(); itemMenu(index); });
         }
         Ui.button(this,p,"+ Snelkoppeling toevoegen",v -> {
             capture(); if(Store.items(data).length()>=Store.LIMIT) { Ui.toast(this,"Maximaal 12 snelkoppelingen per widget."); return; }
-            new AlertDialog.Builder(this).setTitle("Wat wil je toevoegen?").setItems(new String[]{"App","Website","Bestand","Notitie"},(d,n) -> {
+            new AlertDialog.Builder(this).setTitle("Wat wil je toevoegen?").setItems(new String[]{"App","Website","Bestand","Nieuwe eigen notitie","Samsung Notes · bestaande notities"},(d,n) -> {
                 if(n==0) chooseApp(); else if(n==1) editItem(-1,Store.item("web","","https://"));
-                else if(n==2) chooseFile(); else editItem(-1,Store.item("note","",""));
+                else if(n==2) chooseFile(); else if(n==3) editItem(-1,Store.item("note","","")); else chooseSamsungNote();
             }).show();
         });
         Ui.text(this,p,"Uiterlijk",20);
         Ui.text(this,p,"De achtergrond is altijd volledig transparant.",15);
+        Ui.text(this,p,"Formaat: houd de widget op je startscherm ingedrukt en sleep de randen. Je kunt verkleinen tot 1×1. Een kleine widget toont de eerste snelkoppeling(en) die passen; vergroot de widget voor de overige. Op 1×1 bewerk je de instellingen via de app.",14);
         Ui.text(this,p,"Aantal kolommen",14);
         columns=new Spinner(this); columns.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"1 kolom","2 kolommen","3 kolommen","4 kolommen"})); columns.setSelection(Math.max(0,Math.min(3,data.optInt("columns",2)-1))); p.addView(columns);
         size=Ui.input(this,p,"Tekstgrootte (10–28)",""+data.optInt("size",16)); size.setInputType(InputType.TYPE_CLASS_NUMBER);
@@ -131,8 +132,40 @@ public class ConfigureActivity extends Activity {
         try { startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION),40); }
         catch(ActivityNotFoundException e) { Ui.toast(this,"Er is geen bestandskiezer beschikbaar."); }
     }
+    private void chooseSamsungNote() {
+        final String notesPackage="com.samsung.android.app.notes";
+        Intent open=getPackageManager().getLaunchIntentForPackage(notesPackage);
+        if(open==null) { Ui.toast(this,"Samsung Notes is niet beschikbaar op dit toestel."); return; }
+        Intent create=new Intent(Intent.ACTION_CREATE_SHORTCUT).setPackage(notesPackage);
+        List<ResolveInfo> pickers=getPackageManager().queryIntentActivities(create,0);
+        pickers.removeIf(r -> !r.activityInfo.exported || !r.activityInfo.enabled);
+        if(pickers.isEmpty()) {
+            new AlertDialog.Builder(this).setTitle("Bestaande Samsung-notities")
+                .setMessage("Je kunt de lijst met bestaande notities openen en daar je notitie kiezen. Deze versie van Samsung Notes biedt foscwidgets geen notitiekiezer voor een rechtstreekse koppeling naar één notitie. Er wordt geen nieuwe notitie gemaakt.")
+                .setPositiveButton("Notitielijst koppelen",(d,n) -> editItem(-1,Store.item("app","Samsung Notes",open.getComponent().flattenToString())))
+                .setNegativeButton("Annuleren",null).show();
+            return;
+        }
+        ArrayList<String> names=new ArrayList<>();
+        for(ResolveInfo r:pickers) names.add(r.loadLabel(getPackageManager()).toString());
+        new AlertDialog.Builder(this).setTitle("Kies een bestaande Samsung-notitie").setItems(names.toArray(new String[0]),(d,n) -> {
+            ResolveInfo r=pickers.get(n);
+            try { startActivityForResult(new Intent(Intent.ACTION_CREATE_SHORTCUT).setComponent(new ComponentName(r.activityInfo.packageName,r.activityInfo.name)),41); }
+            catch(ActivityNotFoundException|SecurityException e) { Ui.toast(this,"Samsung Notes kan de notitiekiezer niet openen."); }
+        }).setNegativeButton("Annuleren",null).show();
+    }
     @Override protected void onActivityResult(int request,int result,Intent intent) {
         super.onActivityResult(request,result,intent);
+        if(request==41 && result==RESULT_OK && intent!=null) {
+            Intent target=intent.getParcelableExtra(Intent.EXTRA_SHORTCUT_INTENT);
+            if(target==null) { Ui.toast(this,"Samsung Notes heeft geen bruikbare notitiekoppeling teruggegeven."); return; }
+            try {
+                Intent launch=NoteShortcut.validate(this,target);
+                String label=intent.getStringExtra(Intent.EXTRA_SHORTCUT_NAME);
+                editItem(-1,Store.item("shortcut",label==null||label.trim().isEmpty()?"Samsung-notitie":label,launch.toUri(0)));
+            } catch(Exception e) { Ui.toast(this,"Deze Samsung-notitiekoppeling kan niet veilig worden geopend."); }
+            return;
+        }
         if(request!=40 || result!=RESULT_OK || intent==null || intent.getData()==null) return;
         Uri uri=intent.getData();
         try { getContentResolver().takePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION); }

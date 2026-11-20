@@ -29,6 +29,7 @@ public class OpenActivity extends Activity {
         try {
             Intent launch;
             if("app".equals(type)) launch=new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setComponent(ComponentName.unflattenFromString(value)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            else if("shortcut".equals(type)) launch=NoteShortcut.validate(this,Intent.parseUri(value,0));
             else if("file".equals(type)) {
                 Uri uri=Uri.parse(value); String mime=getContentResolver().getType(uri);
                 launch=new Intent(Intent.ACTION_VIEW).setDataAndType(uri,mime==null?"*/*":mime).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

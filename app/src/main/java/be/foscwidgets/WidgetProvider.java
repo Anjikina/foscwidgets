@@ -11,6 +11,16 @@ import android.widget.RemoteViews;
 import org.json.*;
 
 public class WidgetProvider extends AppWidgetProvider {
+    public static class Compact extends WidgetProvider { }
+    public static class Wide extends WidgetProvider { }
+    public static class Square extends WidgetProvider { }
+    public static class Large extends WidgetProvider { }
+    static final Class<?>[] TYPES={Compact.class,Wide.class,Square.class,WidgetProvider.class,Large.class};
+    static int[] allIds(Context c) {
+        java.util.ArrayList<Integer> result=new java.util.ArrayList<>();
+        for(Class<?> type:TYPES) for(int id:AppWidgetManager.getInstance(c).getAppWidgetIds(new ComponentName(c,type))) result.add(id);
+        int[] ids=new int[result.size()]; for(int n=0;n<ids.length;n++) ids[n]=result.get(n); return ids;
+    }
     @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for(int id:ids) update(c,id); }
     @Override public void onAppWidgetOptionsChanged(Context c, AppWidgetManager m, int id, android.os.Bundle b) { update(c,id); }
     @Override public void onDeleted(Context c,int[] ids) { for(int id:ids) Store.delete(c,id); }
@@ -25,8 +35,18 @@ public class WidgetProvider extends AppWidgetProvider {
         JSONObject o = Store.get(c,id); JSONArray a = Store.items(o);
         RemoteViews root = new RemoteViews(c.getPackageName(),R.layout.widget); root.removeAllViews(R.id.items);
         int columns = Math.max(1,Math.min(4,o.optInt("columns",2)));
+        android.os.Bundle options=AppWidgetManager.getInstance(c).getAppWidgetOptions(id);
+        int width=options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,1000);
+        int height=options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT,1000);
+        boolean compact=width<100 || height<95;
+        boolean showEdit=o.optBoolean("edit",true) && !compact;
+        columns=Math.min(columns,Math.max(1,width/65));
         int color; try { color=Color.parseColor(o.optString("color","#FFFFFF")); } catch(Exception e) { color=Color.WHITE; }
         int total = Math.min(Store.LIMIT,a.length());
+        int availableHeight=Math.max(1,height-(showEdit?32:0));
+        int visibleRows=Math.max(1,availableHeight/52);
+        total=Math.min(total,columns*visibleRows);
+        columns=Math.min(columns,Math.max(1,total));
         if(total==0) {
             RemoteViews cell=new RemoteViews(c.getPackageName(),R.layout.cell); cell.setTextViewText(R.id.label,"Tik om in te stellen"); cell.setTextColor(R.id.label,color); cell.setViewVisibility(R.id.icon,View.GONE); cell.setOnClickPendingIntent(R.id.cell,config(c,id));
             RemoteViews row=new RemoteViews(c.getPackageName(),R.layout.row); row.addView(R.id.row,cell); root.addView(R.id.items,row);
@@ -38,9 +58,10 @@ public class WidgetProvider extends AppWidgetProvider {
                 JSONObject item=a.optJSONObject(n);
                 if(n>=total || item==null) { cell.setViewVisibility(R.id.cell,View.INVISIBLE); row.addView(R.id.row,cell); continue; }
                 String label=item.optString("label");
-                if("note".equals(item.optString("type")) && !item.optString("value").isEmpty()) label += "\n"+item.optString("value");
+                if(!compact && "note".equals(item.optString("type")) && !item.optString("value").isEmpty()) label += "\n"+item.optString("value");
                 cell.setTextViewText(R.id.label,label); cell.setTextColor(R.id.label,color); cell.setTextViewTextSize(R.id.label,android.util.TypedValue.COMPLEX_UNIT_SP,Math.max(10,Math.min(28,o.optInt("size",16))));
-                boolean icons=o.optBoolean("icons",false); cell.setViewVisibility(R.id.icon,icons?View.VISIBLE:View.GONE);
+                cell.setInt(R.id.label,"setMaxLines",compact?2:4);
+                boolean icons=o.optBoolean("icons",false) && availableHeight/Math.max(1,(total+columns-1)/columns)>=70; cell.setViewVisibility(R.id.icon,icons?View.VISIBLE:View.GONE);
                 if(icons) {
                     Bitmap bitmap=null;
                     if("app".equals(item.optString("type"))) try {
@@ -55,7 +76,7 @@ public class WidgetProvider extends AppWidgetProvider {
             }
             root.addView(R.id.items,row);
         }
-        root.setViewVisibility(R.id.edit,o.optBoolean("edit",true)?View.VISIBLE:View.GONE); root.setTextColor(R.id.edit,color); root.setOnClickPendingIntent(R.id.edit,config(c,id));
+        root.setViewVisibility(R.id.edit,showEdit?View.VISIBLE:View.GONE); root.setTextColor(R.id.edit,color); root.setOnClickPendingIntent(R.id.edit,config(c,id));
         return root;
     }
 }

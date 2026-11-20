@@ -6,6 +6,8 @@ Nederlandstalige Android-app met volledig transparante startschermwidgets. Voor 
 
 - Tot 12 snelkoppelingen per widget: apps, websites, bestanden en bewerkbare notities.
 - Meerdere afzonderlijk instelbare widgets; 1 tot 4 kolommen.
+- Formaatkeuze bij toevoegen: 1×1, 2×1, 2×2, 3×2 of 4×2. Alle formaten kunnen op het startscherm tot 1×1 worden verkleind.
+- Samsung Notes: open de bestaande notitielijst. Als Samsung Notes een Android-notitiekiezer aanbiedt, kun je ook een rechtstreekse notitiesnelkoppeling kiezen.
 - Tekstgrootte 10–28 sp, eigen tekstkleur, optionele pictogrammen.
 - Een notitie openen door erop te tikken; wijzigingen worden bij afsluiten of verlaten opgeslagen.
 - Blijvende leesrechten voor zelf gekozen bestanden via de Android-bestandskiezer.
@@ -13,11 +15,21 @@ Nederlandstalige Android-app met volledig transparante startschermwidgets. Voor 
 
 ## Installeren
 
-Open `foscwidgets.apk` op je telefoon en installeer de app. Open daarna foscwidgets en tik op **Widget toevoegen**. Je kunt ook een lege plek op je startscherm ingedrukt houden en **Widgets → foscwidgets** kiezen.
+Open `foscwidgets.apk` op je telefoon en installeer de app als update over de vorige versie. Open daarna foscwidgets, tik op **Widget toevoegen** en kies een formaat, bijvoorbeeld **1×1**. Je kunt ook een lege plek op je startscherm ingedrukt houden en **Widgets → foscwidgets** kiezen.
 
 Voeg snelkoppelingen toe, kies het uiterlijk en tik op **Opslaan**. Vergroot de widget op het startscherm wanneer tekst wordt afgekapt. De zichtbare titel in de app helpt je widgets uit elkaar houden; die titel staat niet boven de widget.
 
+Houd de widget op het startscherm ingedrukt en sleep de randen om de grootte te wijzigen. Android bepaalt de uiteindelijke plaatsing op het startschermraster. Een compact formaat toont alleen de eerste snelkoppelingen die passen; overige items verschijnen na vergroten. Op kleine widgets worden de bewerklink, de notitie-inhoud en pictogrammen die niet passen automatisch verborgen. De titel van de snelkoppeling blijft zichtbaar.
+
 Zonder de link **Bewerken** kun je een widget nog steeds via de app aanpassen. Voor het bewerken van een app- of bestandssnelkoppeling kun je de naam wijzigen; om het doel te vervangen verwijder je de snelkoppeling en voeg je een nieuwe toe.
+
+## Bestaande notities uit Samsung Notes
+
+Kies **Snelkoppeling toevoegen → Samsung Notes · bestaande notities**. Als jouw Samsung Notes-versie een openbare Android-notitiekiezer aanbiedt, kun je een bestaande notitie laten kiezen en de teruggegeven koppeling bewaren. De notitie blijft in Samsung Notes en wordt daar geopend en bewerkt.
+
+Als deze kiezer ontbreekt, biedt de app **Notitielijst koppelen** aan. Deze optie opent Samsung Notes met de bestaande notities, waarna je daar de notitie kiest; ze opent niet rechtstreeks één specifieke notitie en maakt geen nieuwe notitie. Ondersteuning voor een rechtstreekse notitiekoppeling is afhankelijk van de geïnstalleerde Samsung Notes-versie en moet op de S24 worden gecontroleerd. foscwidgets leest de afgeschermde Samsung Notes-database niet uit.
+
+**Nieuwe eigen notitie** blijft beschikbaar voor notities die je binnen foscwidgets wilt bijhouden.
 
 ## Gegevens
 
@@ -51,5 +63,4 @@ Na een push naar `main` of een handmatige start onder **Actions → Android APK 
 
 ## Eerste versie
 
-Versie 0.1.0. Getest op een Android 15-emulator; controle op een fysieke Samsung S24 blijft nodig. Zeer kleine widgets en lange notities kunnen tekst afkappen; de widget is in beide richtingen schaalbaar.
-
+Versie 0.2.0. De startschermformaten en compacte weergave worden op een Android 15-emulator gecontroleerd. Een rechtstreekse Samsung Notes-koppeling vereist aanvullende controle met de daadwerkelijke Samsung-app op een S24. Zeer kleine widgets en lange notities kunnen tekst afkappen; de widget is in beide richtingen schaalbaar.

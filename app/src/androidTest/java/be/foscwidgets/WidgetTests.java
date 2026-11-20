@@ -90,6 +90,40 @@ public class WidgetTests {
         Activity a=ins.startActivitySync(new Intent(ctx,ConfigureActivity.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,-123).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         ins.waitForIdleSync(); assertTrue(a.isFinishing()||a.isDestroyed());
     }
+    @Test public void compactProviderIsOneCellAndCanBeConfigured() throws Exception {
+        int small=host.allocateAppWidgetId();
+        try {
+            ins.getUiAutomation().adoptShellPermissionIdentity("android.permission.BIND_APPWIDGET");
+            assertTrue(AppWidgetManager.getInstance(ctx).bindAppWidgetIdIfAllowed(small,new ComponentName(ctx,WidgetProvider.Compact.class)));
+            ins.getUiAutomation().dropShellPermissionIdentity();
+            AppWidgetProviderInfo info=AppWidgetManager.getInstance(ctx).getAppWidgetInfo(small);
+            if(android.os.Build.VERSION.SDK_INT>=31) { assertEquals(1,info.targetCellWidth); assertEquals(1,info.targetCellHeight); }
+            assertTrue(info.minResizeWidth<40*ctx.getResources().getDisplayMetrics().density);
+            assertTrue(java.util.Arrays.stream(WidgetProvider.allIds(ctx)).anyMatch(id -> id==small));
+            JSONObject d=Store.fresh(); Store.items(d).put(Store.item("note","Boodschappen","Melk")); Store.save(ctx,small,d);
+            Activity a=ins.startActivitySync(new Intent(ctx,ConfigureActivity.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,small).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            ins.runOnMainSync(() -> { assertFalse(a.isFinishing()); a.finish(); });
+        } finally { Store.delete(ctx,small); host.deleteAppWidgetId(small); }
+    }
+    @Test public void oneCellLayoutStaysReadableAndExpandsAgain() throws Exception {
+        seed(); android.os.Bundle options=new android.os.Bundle();
+        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,60); options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT,60);
+        AppWidgetManager.getInstance(ctx).updateAppWidgetOptions(widgetId,options);
+        ins.runOnMainSync(() -> {
+            View root=WidgetProvider.render(ctx,widgetId).apply(ctx,new FrameLayout(ctx));
+            int pixels=(int)(60*ctx.getResources().getDisplayMetrics().density);
+            root.measure(View.MeasureSpec.makeMeasureSpec(pixels,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(pixels,View.MeasureSpec.EXACTLY)); root.layout(0,0,pixels,pixels);
+            assertEquals(View.GONE,root.findViewById(R.id.edit).getVisibility());
+            LinearLayout rows=root.findViewById(R.id.items); assertEquals(1,rows.getChildCount()); assertEquals(1,((LinearLayout)rows.getChildAt(0)).getChildCount());
+            TextView label=root.findViewById(R.id.label); assertEquals("Boodschappen",label.getText().toString()); assertTrue(label.getHeight()>0); assertTrue(label.getWidth()>pixels/2);
+        });
+        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,250); options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT,200);
+        AppWidgetManager.getInstance(ctx).updateAppWidgetOptions(widgetId,options);
+        ins.runOnMainSync(() -> { View root=WidgetProvider.render(ctx,widgetId).apply(ctx,new FrameLayout(ctx)); assertEquals(View.VISIBLE,root.findViewById(R.id.edit).getVisibility()); assertEquals(2,((LinearLayout)((LinearLayout)root.findViewById(R.id.items)).getChildAt(0)).getChildCount()); assertTrue(((TextView)root.findViewById(R.id.label)).getText().toString().contains("Melk")); });
+    }
+    @Test public void samsungShortcutCannotTargetAnotherApp() {
+        try { NoteShortcut.validate(ctx,new Intent(ctx,MainActivity.class)); fail("An unrelated app must not be accepted as a Samsung note"); } catch(SecurityException expected) { }
+    }
     @Test public void createVisualWidgetPreview() throws Exception {
         JSONObject d=Store.fresh(); d.put("columns",2); d.put("size",18); d.put("edit",true);
         Store.items(d).put(Store.item("app","Mijn agenda","be.foscwidgets/.MainActivity"));
