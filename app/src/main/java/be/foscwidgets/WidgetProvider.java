@@ -34,7 +34,7 @@ public class WidgetProvider extends AppWidgetProvider {
     static RemoteViews render(Context c,int id) {
         JSONObject o = Store.get(c,id); JSONArray a = Store.items(o);
         RemoteViews root = new RemoteViews(c.getPackageName(),R.layout.widget); root.removeAllViews(R.id.items);
-        int columns = Math.max(1,Math.min(4,o.optInt("columns",2)));
+        int columns = Math.max(1,Math.min(4,o.optInt("columns",1)));
         android.os.Bundle options=AppWidgetManager.getInstance(c).getAppWidgetOptions(id);
         int width=options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,1000);
         int height=options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT,1000);

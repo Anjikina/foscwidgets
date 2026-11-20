@@ -61,7 +61,7 @@ public class ConfigureActivity extends Activity {
         Ui.text(this,p,"De achtergrond is altijd volledig transparant.",15);
         Ui.text(this,p,"Formaat: houd de widget op je startscherm ingedrukt en sleep de randen. Je kunt verkleinen tot 1×1. Een kleine widget toont de eerste snelkoppeling(en) die passen; vergroot de widget voor de overige. Op 1×1 bewerk je de instellingen via de app.",14);
         Ui.text(this,p,"Aantal kolommen",14);
-        columns=new Spinner(this); columns.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"1 kolom","2 kolommen","3 kolommen","4 kolommen"})); columns.setSelection(Math.max(0,Math.min(3,data.optInt("columns",2)-1))); p.addView(columns);
+        columns=new Spinner(this); columns.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"1 kolom","2 kolommen","3 kolommen","4 kolommen"})); columns.setSelection(Math.max(0,Math.min(3,data.optInt("columns",1)-1))); p.addView(columns);
         size=Ui.input(this,p,"Tekstgrootte (10–28)",""+data.optInt("size",16)); size.setInputType(InputType.TYPE_CLASS_NUMBER);
         color=Ui.input(this,p,"Tekstkleur (#RRGGBB)",data.optString("color","#FFFFFF"));
         Ui.button(this,p,"Kleur kiezen",v -> new AlertDialog.Builder(this).setTitle("Tekstkleur").setItems(new String[]{"Wit","Zwart","Donkergroen","Geel","Lichtblauw"},(d,n) -> color.setText(new String[]{"#FFFFFF","#111111","#0D6B65","#FFE082","#81D4FA"}[n])).show());

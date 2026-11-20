@@ -29,7 +29,7 @@ public class WidgetTests {
     }
     @After public void clean() { Store.delete(ctx,widgetId); host.deleteHost(); }
     private JSONObject seed() throws Exception {
-        JSONObject d=Store.fresh(); d.put("title","Testwidget");
+        JSONObject d=Store.fresh(); d.put("title","Testwidget"); d.put("columns",2);
         Store.items(d).put(Store.item("note","Boodschappen","Melk"));
         Store.items(d).put(Store.item("web","Website","https://example.com"));
         Store.save(ctx,widgetId,d); return d;

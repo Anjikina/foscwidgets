@@ -8,7 +8,7 @@ final class Store {
     static final int LIMIT = 12;
     static JSONObject fresh() {
         JSONObject o = new JSONObject();
-        try { o.put("title", "Mijn widget"); o.put("columns", 2); o.put("size", 16); o.put("color", "#FFFFFF"); o.put("icons", false); o.put("edit", true); o.put("items", new JSONArray()); }
+        try { o.put("title", "Mijn widget"); o.put("columns", 1); o.put("size", 16); o.put("color", "#FFFFFF"); o.put("icons", false); o.put("edit", true); o.put("items", new JSONArray()); }
         catch (Exception e) { throw new IllegalStateException(e); }
         return o;
     }
