@@ -1,0 +1,61 @@
+name: Android APK
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build and check
+        run: bash gradlew --no-daemon assembleDebug lintDebug assembleDebugAndroidTest
+      - uses: actions/upload-artifact@v4
+        with:
+          name: foscwidgets-checks
+          path: app/build/reports/lint-results-debug.html
+  apk:
+    if: github.event_name != 'pull_request'
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Restore private signing key
+        env:
+          KEYSTORE: ${{ secrets.FOSC_KEYSTORE_BASE64 }}
+          PASSWORD: ${{ secrets.FOSC_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE" ] || [ -z "$PASSWORD" ]; then
+            echo 'Add FOSC_KEYSTORE_BASE64 and FOSC_KEYSTORE_PASSWORD to repository Actions secrets.'
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/foscwidgets.jks"
+      - name: Build installable APK
+        env:
+          FOSC_KEYSTORE_FILE: ${{ runner.temp }}/foscwidgets.jks
+          FOSC_KEYSTORE_PASSWORD: ${{ secrets.FOSC_KEYSTORE_PASSWORD }}
+        run: |
+          bash gradlew --no-daemon assembleRelease
+          mkdir -p delivery
+          cp app/build/outputs/apk/release/app-release.apk delivery/foscwidgets.apk
+          cd delivery && sha256sum foscwidgets.apk > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: foscwidgets-apk
+          path: delivery/
+          if-no-files-found: error
