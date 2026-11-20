@@ -124,6 +124,16 @@ public class WidgetTests {
     @Test public void samsungShortcutCannotTargetAnotherApp() {
         try { NoteShortcut.validate(ctx,new Intent(ctx,MainActivity.class)); fail("An unrelated app must not be accepted as a Samsung note"); } catch(SecurityException expected) { }
     }
+    @Test public void samsungNoteIdentifierSurvivesSavingWithoutNoteCopy() throws Exception {
+        String uuid="test-existing-note-123";
+        Intent target=NoteShortcut.forUuid(uuid);
+        JSONObject item=Store.item("shortcut","Werknotitie",target.toUri(0)); JSONObject data=Store.fresh(); Store.items(data).put(item); Store.save(ctx,widgetId,data);
+        Intent restored=Intent.parseUri(Store.items(Store.get(ctx,widgetId)).getJSONObject(0).getString("value"),0);
+        assertEquals(uuid,restored.getStringExtra("sdoc_uuid")); assertEquals("com.samsung.android.app.notes.ACTION_OPEN_MEMO",restored.getAction());
+        assertEquals("com.samsung.android.app.notes",restored.getComponent().getPackageName());
+        assertFalse(restored.hasExtra(Intent.EXTRA_TEXT));
+        try { NoteShortcut.forUuid(""); fail("An empty identifier must be rejected"); } catch(IllegalArgumentException expected) { }
+    }
     @Test public void createVisualWidgetPreview() throws Exception {
         JSONObject d=Store.fresh(); d.put("columns",2); d.put("size",18); d.put("edit",true);
         Store.items(d).put(Store.item("app","Mijn agenda","be.foscwidgets/.MainActivity"));

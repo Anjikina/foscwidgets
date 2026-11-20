@@ -136,6 +136,11 @@ public class ConfigureActivity extends Activity {
         final String notesPackage="com.samsung.android.app.notes";
         Intent open=getPackageManager().getLaunchIntentForPackage(notesPackage);
         if(open==null) { Ui.toast(this,"Samsung Notes is niet beschikbaar op dit toestel."); return; }
+        Intent pick=new Intent(Intent.ACTION_PICK).setType("application/sdocuuid").setPackage(notesPackage);
+        if(getPackageManager().resolveActivity(pick,0)!=null) {
+            try { startActivityForResult(pick,42); return; }
+            catch(ActivityNotFoundException|SecurityException e) { Ui.toast(this,"De Samsung-notitiekiezer is niet beschikbaar."); }
+        }
         Intent create=new Intent(Intent.ACTION_CREATE_SHORTCUT).setPackage(notesPackage);
         List<ResolveInfo> pickers=getPackageManager().queryIntentActivities(create,0);
         pickers.removeIf(r -> !r.activityInfo.exported || !r.activityInfo.enabled);
@@ -156,6 +161,15 @@ public class ConfigureActivity extends Activity {
     }
     @Override protected void onActivityResult(int request,int result,Intent intent) {
         super.onActivityResult(request,result,intent);
+        if(request==42 && result==RESULT_OK && intent!=null) {
+            try {
+                String uuid=intent.getStringExtra("application/sdocuuid");
+                if(uuid==null || uuid.isEmpty()) uuid=intent.getStringExtra("sdoc_uuid");
+                Intent target=NoteShortcut.validate(this,NoteShortcut.forUuid(uuid));
+                editItem(-1,Store.item("shortcut","Samsung-notitie",target.toUri(0)));
+            } catch(Exception e) { Ui.toast(this,"Samsung Notes heeft geen bruikbare bestaande notitie teruggegeven. Probeer opnieuw."); }
+            return;
+        }
         if(request==41 && result==RESULT_OK && intent!=null) {
             Intent target=intent.getParcelableExtra(Intent.EXTRA_SHORTCUT_INTENT);
             if(target==null) { Ui.toast(this,"Samsung Notes heeft geen bruikbare notitiekoppeling teruggegeven."); return; }

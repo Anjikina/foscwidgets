@@ -7,7 +7,7 @@ Nederlandstalige Android-app met volledig transparante startschermwidgets. Voor 
 - Tot 12 snelkoppelingen per widget: apps, websites, bestanden en bewerkbare notities.
 - Meerdere afzonderlijk instelbare widgets; 1 tot 4 kolommen.
 - Formaatkeuze bij toevoegen: 1×1, 2×1, 2×2, 3×2 of 4×2. Alle formaten kunnen op het startscherm tot 1×1 worden verkleind.
-- Samsung Notes: open de bestaande notitielijst. Als Samsung Notes een Android-notitiekiezer aanbiedt, kun je ook een rechtstreekse notitiesnelkoppeling kiezen.
+- Samsung Notes: kies een bestaande notitie via de eigen notitiekiezer van Samsung Notes en open die rechtstreeks vanuit de widget.
 - Tekstgrootte 10–28 sp, eigen tekstkleur, optionele pictogrammen.
 - Een notitie openen door erop te tikken; wijzigingen worden bij afsluiten of verlaten opgeslagen.
 - Blijvende leesrechten voor zelf gekozen bestanden via de Android-bestandskiezer.
@@ -25,9 +25,11 @@ Zonder de link **Bewerken** kun je een widget nog steeds via de app aanpassen. V
 
 ## Bestaande notities uit Samsung Notes
 
-Kies **Snelkoppeling toevoegen → Samsung Notes · bestaande notities**. Als jouw Samsung Notes-versie een openbare Android-notitiekiezer aanbiedt, kun je een bestaande notitie laten kiezen en de teruggegeven koppeling bewaren. De notitie blijft in Samsung Notes en wordt daar geopend en bewerkt.
+Kies **Snelkoppeling toevoegen → Samsung Notes · bestaande notities**. Samsung Notes opent zijn eigen kiezer voor bestaande notities. Selecteer een notitie en geef de snelkoppeling daarna een herkenbare naam. De notitie blijft in Samsung Notes en wordt daar geopend en bewerkt; foscwidgets bewaart alleen de koppeling.
 
-Als deze kiezer ontbreekt, biedt de app **Notitielijst koppelen** aan. Deze optie opent Samsung Notes met de bestaande notities, waarna je daar de notitie kiest; ze opent niet rechtstreeks één specifieke notitie en maakt geen nieuwe notitie. Ondersteuning voor een rechtstreekse notitiekoppeling is afhankelijk van de geïnstalleerde Samsung Notes-versie en moet op de S24 worden gecontroleerd. foscwidgets leest de afgeschermde Samsung Notes-database niet uit.
+De koppeling gebruikt `ACTION_PICK` met `application/sdocuuid` en de door Samsung teruggegeven notitie-ID. De beschikbare kiezer en de openbare activiteit voor het openen van een bestaande notitie zijn op de aangesloten S24 met Samsung Notes 4.4.48.15 gecontroleerd. Er wordt geen Samsung-notitie gekopieerd of naar GitHub verstuurd; foscwidgets leest de afgeschermde Samsung Notes-database niet uit. Vergrendelde notities blijven onder de beveiliging van Samsung Notes vallen.
+
+Bij andere Samsung Notes-versies probeert de app een aangeboden Android-snelkoppelingenkiezer. Ontbreekt ook die, dan biedt de app **Notitielijst koppelen** aan; die reserveoptie opent de lijst en niet rechtstreeks één specifieke notitie.
 
 **Nieuwe eigen notitie** blijft beschikbaar voor notities die je binnen foscwidgets wilt bijhouden.
 
@@ -63,4 +65,4 @@ Na een push naar `main` of een handmatige start onder **Actions → Android APK 
 
 ## Eerste versie
 
-Versie 0.2.0. De startschermformaten en compacte weergave worden op een Android 15-emulator gecontroleerd. Een rechtstreekse Samsung Notes-koppeling vereist aanvullende controle met de daadwerkelijke Samsung-app op een S24. Zeer kleine widgets en lange notities kunnen tekst afkappen; de widget is in beide richtingen schaalbaar.
+Versie 0.2.1. De startschermformaten en compacte weergave zijn op een Android 15-emulator gecontroleerd. De volledige selectie en het openen van een Samsung-notitie worden aanvullend op de S24 gecontroleerd. Zeer kleine widgets en lange notities kunnen tekst afkappen; de widget is in beide richtingen schaalbaar.
