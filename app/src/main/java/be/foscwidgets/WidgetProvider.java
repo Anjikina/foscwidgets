@@ -58,8 +58,10 @@ public class WidgetProvider extends AppWidgetProvider {
                 JSONObject item=a.optJSONObject(n);
                 if(n>=total || item==null) { cell.setViewVisibility(R.id.cell,View.INVISIBLE); row.addView(R.id.row,cell); continue; }
                 String label=item.optString("label");
-                if(!compact && "note".equals(item.optString("type")) && !item.optString("value").isEmpty()) label += "\n"+item.optString("value");
+                if((!compact || label.isEmpty()) && "note".equals(item.optString("type")) && !item.optString("value").isEmpty()) label += (label.isEmpty()?"":"\n")+item.optString("value");
                 cell.setTextViewText(R.id.label,label); cell.setTextColor(R.id.label,color); cell.setTextViewTextSize(R.id.label,android.util.TypedValue.COMPLEX_UNIT_SP,Math.max(10,Math.min(28,o.optInt("size",16))));
+                cell.setViewVisibility(R.id.label,label.isEmpty()?View.GONE:View.VISIBLE);
+                cell.setContentDescription(R.id.cell,item.optString("label").isEmpty()?("note".equals(item.optString("type"))||"shortcut".equals(item.optString("type"))?"Notitie openen":"Snelkoppeling openen"):item.optString("label"));
                 cell.setInt(R.id.label,"setMaxLines",compact?2:4);
                 boolean icons=o.optBoolean("icons",false) && availableHeight/Math.max(1,(total+columns-1)/columns)>=70; cell.setViewVisibility(R.id.icon,icons?View.VISIBLE:View.GONE);
                 if(icons) {

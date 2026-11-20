@@ -40,14 +40,15 @@ public class ConfigureActivity extends Activity {
     }
     private void render() {
         LinearLayout p=Ui.page(this,"Widget instellen");
-        title=Ui.input(this,p,"Naam in de app",data.optString("title","Mijn widget"));
+        title=Ui.input(this,p,"Naam in de app (optioneel)",data.optString("title","Mijn widget"));
         Ui.text(this,p,"Snelkoppelingen · "+Store.items(data).length()+" / "+Store.LIMIT,20);
         JSONArray a=Store.items(data);
         for(int i=0;i<a.length();i++) {
             JSONObject o=a.optJSONObject(i); if(o==null) continue;
             final int index=i;
             String type=o.optString("type"); String kind="app".equals(type)?"App":"web".equals(type)?"Website":"file".equals(type)?"Bestand":"shortcut".equals(type)?"Bestaande notitie":"Notitie";
-            Ui.button(this,p,(i+1)+". "+o.optString("label")+" · "+kind,v -> { capture(); itemMenu(index); });
+            String label=o.optString("label");
+            Ui.button(this,p,(i+1)+". "+(label.isEmpty()?"(zonder naam)":label)+" · "+kind,v -> { capture(); itemMenu(index); });
         }
         Ui.button(this,p,"+ Snelkoppeling toevoegen",v -> {
             capture(); if(Store.items(data).length()>=Store.LIMIT) { Ui.toast(this,"Maximaal 12 snelkoppelingen per widget."); return; }
@@ -76,13 +77,13 @@ public class ConfigureActivity extends Activity {
         if(!c.matches("#[0-9a-fA-F]{6}")) { color.setError("Gebruik bijvoorbeeld #FFFFFF"); return; }
         if(Store.items(data).length()==0) { Ui.toast(this,"Voeg eerst minstens één snelkoppeling toe."); return; }
         try {
-            if(data.optString("title").isEmpty()) data.put("title","Mijn widget");
             Store.save(this,widgetId,data); WidgetProvider.update(this,widgetId);
             setResult(RESULT_OK,new Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,widgetId)); finish();
         } catch(Exception e) { Ui.toast(this,"Opslaan is mislukt. Probeer opnieuw."); }
     }
     private void itemMenu(int index) {
-        new AlertDialog.Builder(this).setTitle(Store.items(data).optJSONObject(index).optString("label"))
+        String label=Store.items(data).optJSONObject(index).optString("label");
+        new AlertDialog.Builder(this).setTitle(label.isEmpty()?"Snelkoppeling zonder naam":label)
             .setItems(new String[]{"Bewerken","Omhoog","Omlaag","Verwijderen"},(d,n) -> {
                 if(n==0) editItem(index,Store.items(data).optJSONObject(index));
                 else if(n==3) new AlertDialog.Builder(this).setMessage("Deze snelkoppeling uit de widget verwijderen?").setPositiveButton("Verwijderen",(x,y) -> { Store.items(data).remove(index); render(); }).setNegativeButton("Annuleren",null).show();
@@ -91,7 +92,8 @@ public class ConfigureActivity extends Activity {
     }
     private void editItem(int index,JSONObject original) {
         LinearLayout p=new LinearLayout(this); p.setOrientation(LinearLayout.VERTICAL); p.setPadding(Ui.dp(this,20),0,Ui.dp(this,20),0);
-        EditText label=Ui.input(this,p,"Naam",original.optString("label"));
+        EditText label=Ui.input(this,p,"Naam (optioneel)",original.optString("label"));
+        Ui.text(this,p,"Laat de naam leeg om geen naam op de widget te tonen.",14);
         String type=original.optString("type");
         EditText value=null;
         if("web".equals(type)||"note".equals(type)) {
@@ -102,7 +104,7 @@ public class ConfigureActivity extends Activity {
         final EditText val=value;
         AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Snelkoppeling").setView(p).setPositiveButton("Bewaren",null).setNegativeButton("Annuleren",null).create();
         dialog.setOnShowListener(x -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String name=label.getText().toString().trim(); if(name.isEmpty()) { label.setError("Vul een naam in"); return; }
+            String name=label.getText().toString().trim();
             String target=val==null?original.optString("value"):val.getText().toString();
             if("web".equals(type)) {
                 target=target.trim(); if(!target.contains(":")) target="https://"+target;
