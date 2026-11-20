@@ -47,8 +47,9 @@ De workflow staat in `.github/workflows/android.yml`. Plaats dit project in `Anj
 
 Upload het privé-ondertekeningspakket nooit als broncode. Het bevat de sleutel waarmee toekomstige versies dezelfde app kunnen bijwerken. Bewaar een eigen veilige kopie.
 
-Na een push naar `main` of een handmatige start onder **Actions → Android APK → Run workflow** verschijnt bij een geslaagde run het artifact **foscwidgets-apk**, met de installeerbare APK. De workflow controleert de code en compileert de praktijktests; de tests op een toestel zijn afzonderlijk lokaal uitgevoerd. Publicatie en een eerste geslaagde GitHub-run zijn nog niet bevestigd.
+Na een push naar `main` of een handmatige start onder **Actions → Android APK → Run workflow** verschijnt bij een geslaagde run het artifact **foscwidgets-apk**, met de installeerbare APK. De workflow controleert de code en compileert de praktijktests; de tests op een toestel zijn afzonderlijk lokaal uitgevoerd. De broncode is gepubliceerd op [Anjikina/foscwidgets](https://github.com/Anjikina/foscwidgets) en de twee ondertekeningssecrets zijn ingesteld. Bekijk de actuele bouwresultaten onder **Actions**.
 
 ## Eerste versie
 
 Versie 0.1.0. Getest op een Android 15-emulator; controle op een fysieke Samsung S24 blijft nodig. Zeer kleine widgets en lange notities kunnen tekst afkappen; de widget is in beide richtingen schaalbaar.
+
