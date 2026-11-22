@@ -124,6 +124,49 @@ public class WidgetTests {
     @Test public void samsungShortcutCannotTargetAnotherApp() {
         try { NoteShortcut.validate(ctx,new Intent(ctx,MainActivity.class)); fail("An unrelated app must not be accepted as a Samsung note"); } catch(SecurityException expected) { }
     }
+    private Intent widgetOpenIntent(JSONObject data) throws Exception {
+        return new Intent(ctx,OpenActivity.class).putExtra("widget",widgetId).putExtra("item",Store.items(data).getJSONObject(0).getString("id"))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_MULTIPLE_TASK|Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+    }
+    private boolean hasWidgetOpeningTask() {
+        for(ActivityManager.AppTask task:ctx.getSystemService(ActivityManager.class).getAppTasks()) {
+            ComponentName component=task.getTaskInfo().baseIntent.getComponent();
+            if(component!=null && OpenActivity.class.getName().equals(component.getClassName())) return true;
+        }
+        return false;
+    }
+    private void assertOpeningTaskRemoved() {
+        for(int n=0;n<50 && hasWidgetOpeningTask();n++) android.os.SystemClock.sleep(100);
+        assertFalse("No temporary widget window remains in recent apps",hasWidgetOpeningTask());
+    }
+    @Test public void unprotectedShortcutOpensTargetAndRemovesTemporaryWindow() throws Exception {
+        JSONObject data=Store.fresh(); Store.items(data).put(Store.item("app","App",new ComponentName(ctx,MainActivity.class).flattenToString())); Store.save(ctx,widgetId,data);
+        Instrumentation.ActivityMonitor monitor=ins.addMonitor(MainActivity.class.getName(),null,false);
+        Activity target=null;
+        try {
+            ins.startActivitySync(widgetOpenIntent(data));
+            target=monitor.waitForActivityWithTimeout(6000); assertNotNull("The unprotected shortcut opens directly",target);
+            assertOpeningTaskRemoved(); assertFalse(target.isFinishing());
+        } finally { ins.removeMonitor(monitor); if(target!=null) { Activity main=target; ins.runOnMainSync(main::finish); } }
+    }
+    @Test public void pinAndBiometricShortcutsRemoveTemporaryWindowAfterUnlock() throws Exception {
+        org.junit.Assume.assumeTrue(android.os.Build.MODEL.startsWith("sdk_gphone"));
+        org.junit.Assume.assumeFalse(WidgetSecurity.deviceIsSecure(ctx));
+        emulatorShell("locksettings set-pin 2580");
+        try {
+            for(int mode=1;mode<=2;mode++) {
+                JSONObject data=Store.fresh(); data.put("lock",mode); Store.items(data).put(Store.item("app","App",new ComponentName(ctx,MainActivity.class).flattenToString())); Store.save(ctx,widgetId,data);
+                Instrumentation.ActivityMonitor monitor=ins.addMonitor(MainActivity.class.getName(),null,false);
+                Activity target=null,opening=null;
+                try {
+                    opening=ins.startActivitySync(widgetOpenIntent(data));
+                    assertEquals("The target stays closed until authentication",0,monitor.getHits());
+                    enterTestPin(); target=monitor.waitForActivityWithTimeout(6000); assertNotNull(target);
+                    assertOpeningTaskRemoved(); assertFalse(target.isFinishing());
+                } finally { ins.removeMonitor(monitor); if(opening!=null && !opening.isFinishing()) { Activity helper=opening; ins.runOnMainSync(helper::finish); } if(target!=null) { Activity main=target; ins.runOnMainSync(main::finish); } }
+            }
+        } finally { emulatorShell("locksettings clear --old 2580"); }
+    }
     @Test public void protectedWidgetsNeverExposeNoteBodyOnHomeScreen() throws Exception {
         JSONObject data=seed();
         for(int mode=1;mode<=2;mode++) {
@@ -242,7 +285,9 @@ public class WidgetTests {
             a=ins.startActivitySync(new Intent(ctx,OpenActivity.class).putExtra("widget",widgetId).putExtra("item",Store.items(data).getJSONObject(0).getString("id")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             Activity opened=a;
             assertNotNull(credentialField()); emulatorShell("input keyevent 4");
-            for(int n=0;n<50 && !opened.isFinishing();n++) android.os.SystemClock.sleep(100);
+            for(int n=0;n<10 && !opened.isFinishing() && !opened.isDestroyed();n++) android.os.SystemClock.sleep(100);
+            if(!opened.isFinishing() && !opened.isDestroyed()) emulatorShell("input keyevent 4");
+            for(int n=0;n<50 && !opened.isFinishing() && !opened.isDestroyed();n++) android.os.SystemClock.sleep(100);
             assertTrue("Cancel closes the protected widget",opened.isFinishing()||opened.isDestroyed());
         } finally { if(a!=null && !a.isFinishing()) { Activity target=a; ins.runOnMainSync(target::finish); } emulatorShell("locksettings clear --old 2580"); }
     }

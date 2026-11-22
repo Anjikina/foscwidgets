@@ -73,7 +73,8 @@ public class WidgetProvider extends AppWidgetProvider {
                     } catch(Exception ignored) { }
                     if(bitmap!=null) cell.setImageViewBitmap(R.id.icon,bitmap); else cell.setImageViewResource(R.id.icon,"note".equals(item.optString("type"))?android.R.drawable.ic_menu_edit:"file".equals(item.optString("type"))?android.R.drawable.ic_menu_save:android.R.drawable.ic_menu_view);
                 }
-                Intent i=new Intent(c,OpenActivity.class).putExtra("widget",id).putExtra("item",item.optString("id")).setData(Uri.parse("foscwidgets://open/"+id+"/"+item.optString("id")));
+                Intent i=new Intent(c,OpenActivity.class).putExtra("widget",id).putExtra("item",item.optString("id")).setData(Uri.parse("foscwidgets://open/2/"+id+"/"+item.optString("id")))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_MULTIPLE_TASK|Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
                 cell.setOnClickPendingIntent(R.id.cell,PendingIntent.getActivity(c,0,i,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE));
                 row.addView(R.id.row,cell);
             }

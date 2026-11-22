@@ -65,7 +65,7 @@ Na een push naar `main` of een handmatige start onder **Actions → Android APK 
 
 ## Eerste versie
 
-Versie 0.3.1. De startschermformaten en compacte weergave zijn op een Android 15-emulator gecontroleerd. Zeer kleine widgets en lange notities kunnen tekst afkappen; de widget is in beide richtingen schaalbaar.
+Versie 0.3.2. De startschermformaten en compacte weergave zijn op een Android 15-emulator gecontroleerd. Zeer kleine widgets en lange notities kunnen tekst afkappen; de widget is in beide richtingen schaalbaar.
 
 Namen zijn optioneel. Laat de naam van een snelkoppeling leeg om de zichtbare titel te verbergen. Pictogrammen blijven naar keuze zichtbaar en de snelkoppeling blijft aanklikbaar. Ook de widgetnaam in de app mag leeg blijven; alleen de beheerlijst gebruikt dan een nummer om widgets uit elkaar te houden.
 
@@ -84,3 +84,9 @@ Er wordt geen nieuwe pincode aangemaakt en foscwidgets ontvangt geen pincode of 
 Elke beveiligde widget vraagt bij het openen om ontgrendeling. Ook de widgetinstellingen zijn beschermd, zodat je de beveiliging niet zonder ontgrendelen kunt uitschakelen. Een beveiligde eigen notitie toont geen inhoud op het startscherm. Bij verlaten van de app verdwijnt de beveiligde inhoud en is opnieuw ontgrendelen nodig; systeemschermopnamen van beveiligde schermen worden geblokkeerd.
 
 Dit beveiligt toegang via foscwidgets. Een gekoppelde app, website of bestand kan daarnaast via zijn eigen app worden geopend en houdt zijn eigen beveiliging. Het is geen algemene appvergrendeling of versleutelde bestandskluis.
+
+## Tijdelijk openingsscherm
+
+Het scherm dat een widgetsnelkoppeling opent, staat niet in **Recente apps**. Bij een externe bestemming sluit dit scherm automatisch zodra de bestemming is geopend, zowel zonder beveiliging als na een geslaagde pincode- of biometrische controle. De bestemming krijgt haar eigen appvenster en blijft open. Annuleren sluit het tijdelijke scherm ook.
+
+Na een appupdate worden widgets automatisch ververst en oude tijdelijke openingsvensters opgeruimd of verborgen. De gewone foscwidgets-instellingen en de eigen notitie-editor blijven beschikbaar wanneer je die bewust opent.

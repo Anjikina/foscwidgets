@@ -15,6 +15,7 @@ public class OpenActivity extends ProtectedWidgetActivity {
     private String savedText;
     @Override public void onCreate(Bundle b) {
         super.onCreate(b); widgetId=getIntent().getIntExtra("widget",-1); itemId=getIntent().getStringExtra("item");
+        WidgetLaunchTasks.cleanPreviousTasks(this,getTaskId());
         if(!Store.exists(this,widgetId)) { finish(); return; }
         protectWidget(widgetId,() -> openItem(b));
     }
@@ -38,10 +39,14 @@ public class OpenActivity extends ProtectedWidgetActivity {
                 launch=new Intent(Intent.ACTION_VIEW).setDataAndType(uri,mime==null?"*/*":mime).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 launch.setClipData(ClipData.newRawUri("Bestand",uri));
             } else launch=new Intent(Intent.ACTION_VIEW,Uri.parse(value));
+            launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(launch); finish();
         } catch(Exception e) {
             new AlertDialog.Builder(this).setTitle("Kan niet openen").setMessage("De app of het bestand is niet meer beschikbaar, of er is geen geschikte app geïnstalleerd. Pas de snelkoppeling aan via foscwidgets.").setPositiveButton("Sluiten",(d,w) -> finish()).setOnCancelListener(d -> finish()).show();
         }
+    }
+    @Override public void finish() {
+        if(isTaskRoot()) finishAndRemoveTask(); else super.finish();
     }
     private JSONObject find(JSONObject data) {
         JSONArray a=Store.items(data); for(int i=0;i<a.length();i++) { JSONObject o=a.optJSONObject(i); if(o!=null && o.optString("id").equals(itemId)) return o; } return null;
