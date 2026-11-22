@@ -28,7 +28,7 @@ public abstract class ProtectedWidgetActivity extends Activity {
     protected final void whenUnlocked(Runnable action) {
         if(unlocked) action.run(); else deferredAction=action;
     }
-    private void showLockedPage() {
+    protected void showLockedPage() {
         LinearLayout page=Ui.page(this,"Widget vergrendeld");
         Ui.text(this,page,"Ontgrendel met de beveiliging van je telefoon om verder te gaan.",16);
         Ui.button(this,page,"Sluiten",v -> finish());

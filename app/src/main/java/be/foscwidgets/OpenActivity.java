@@ -13,6 +13,10 @@ public class OpenActivity extends ProtectedWidgetActivity {
     private String itemId;
     private EditText note;
     private String savedText;
+    @Override protected void showLockedPage() {
+        // The system prompt is the only visible surface until authentication succeeds.
+        setContentView(new android.view.View(this));
+    }
     @Override public void onCreate(Bundle b) {
         super.onCreate(b); widgetId=getIntent().getIntExtra("widget",-1); itemId=getIntent().getStringExtra("item");
         WidgetLaunchTasks.cleanPreviousTasks(this,getTaskId());

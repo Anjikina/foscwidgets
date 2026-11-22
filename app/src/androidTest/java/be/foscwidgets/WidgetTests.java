@@ -161,6 +161,13 @@ public class WidgetTests {
                 try {
                     opening=ins.startActivitySync(widgetOpenIntent(data));
                     assertEquals("The target stays closed until authentication",0,monitor.getHits());
+                    Activity locked=opening;
+                    ins.runOnMainSync(() -> {
+                        android.util.TypedValue translucent=new android.util.TypedValue();
+                        assertTrue(locked.getTheme().resolveAttribute(android.R.attr.windowIsTranslucent,translucent,true));
+                        assertNotEquals("The authentication host leaves the launcher visible",0,translucent.data);
+                        assertEquals("No intermediate lock page appears",0,find(locked.getWindow().getDecorView(),TextView.class).size());
+                    });
                     enterTestPin(); target=monitor.waitForActivityWithTimeout(6000); assertNotNull(target);
                     assertOpeningTaskRemoved(); assertFalse(target.isFinishing());
                 } finally { ins.removeMonitor(monitor); if(opening!=null && !opening.isFinishing()) { Activity helper=opening; ins.runOnMainSync(helper::finish); } if(target!=null) { Activity main=target; ins.runOnMainSync(main::finish); } }
