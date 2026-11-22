@@ -12,14 +12,16 @@ import android.widget.LinearLayout;
 public abstract class ProtectedWidgetActivity extends Activity {
     private static final int AUTH_REQUEST=9081;
     private int guardedWidgetId=-1;
-    private boolean protectionStarted,unlocked,authRunning;
+    private boolean protectionStarted,unlocked,authRunning,requiresExistingWidget;
+    private int grantedMode;
     private Runnable firstDisplay,deferredAction;
     private View hiddenContent;
     private CancellationSignal cancellation;
 
     protected final void protectWidget(int id,Runnable display) {
         guardedWidgetId=id; protectionStarted=true; firstDisplay=display;
-        if(!WidgetSecurity.isLocked(this,id)) { allowDisplay(); return; }
+        requiresExistingWidget=WidgetSecurity.isLocked(this,id);
+        if(!requiresExistingWidget) { allowDisplay(); return; }
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
         showLockedPage();
     }
@@ -33,16 +35,21 @@ public abstract class ProtectedWidgetActivity extends Activity {
     }
     private void allowDisplay() {
         if(isFinishing()||isDestroyed()) return;
+        if(requiresExistingWidget && !Store.exists(this,guardedWidgetId)) { finish(); return; }
         authRunning=false; unlocked=true;
+        grantedMode=WidgetSecurity.mode(Store.get(this,guardedWidgetId));
         if(firstDisplay!=null) { Runnable display=firstDisplay; firstDisplay=null; display.run(); }
         else if(hiddenContent!=null) { View content=hiddenContent; hiddenContent=null; setContentView(content); }
         if(deferredAction!=null) { Runnable action=deferredAction; deferredAction=null; action.run(); }
     }
     @Override protected void onResume() {
         super.onResume();
+        if(protectionStarted && requiresExistingWidget && !Store.exists(this,guardedWidgetId)) { finish(); return; }
+        if(protectionStarted && unlocked && grantedMode==0 && WidgetSecurity.isLocked(this,guardedWidgetId)) hideContent();
         if(protectionStarted && !unlocked && !authRunning) authenticate();
     }
     private void authenticate() {
+        if(requiresExistingWidget && !Store.exists(this,guardedWidgetId)) { finish(); return; }
         int mode=WidgetSecurity.mode(Store.get(this,guardedWidgetId));
         if(mode==0) { allowDisplay(); return; }
         if(!WidgetSecurity.deviceIsSecure(this)) {
@@ -81,12 +88,16 @@ public abstract class ProtectedWidgetActivity extends Activity {
     }
     @Override protected void onStop() {
         if(protectionStarted && unlocked && !isFinishing() && WidgetSecurity.isLocked(this,guardedWidgetId)) {
-            unlocked=false;
-            ViewGroup content=findViewById(android.R.id.content);
-            if(content!=null && content.getChildCount()>0) { hiddenContent=content.getChildAt(0); content.removeView(hiddenContent); }
-            showLockedPage();
+            hideContent();
         }
         super.onStop();
+    }
+    private void hideContent() {
+        unlocked=false; requiresExistingWidget=true;
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        ViewGroup content=findViewById(android.R.id.content);
+        if(content!=null && content.getChildCount()>0) { hiddenContent=content.getChildAt(0); content.removeView(hiddenContent); }
+        showLockedPage();
     }
     @Override protected void onDestroy() {
         authRunning=false;

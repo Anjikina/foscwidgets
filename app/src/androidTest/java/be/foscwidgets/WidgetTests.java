@@ -148,8 +148,30 @@ public class WidgetTests {
             });
         }
     }
+    @Test public void enablingLockProtectsAnAlreadyOpenNoteWhenItReturns() throws Exception {
+        org.junit.Assume.assumeFalse(WidgetSecurity.deviceIsSecure(ctx));
+        JSONObject data=seed();
+        Activity a=ins.startActivitySync(new Intent(ctx,OpenActivity.class).putExtra("widget",widgetId).putExtra("item",Store.items(data).getJSONObject(0).getString("id")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        ins.runOnMainSync(() -> { assertEquals(1,find(a.getWindow().getDecorView(),EditText.class).size()); ins.callActivityOnStop(a); });
+        data.put("lock",1); Store.save(ctx,widgetId,data);
+        ins.runOnMainSync(() -> {
+            ins.callActivityOnResume(a);
+            assertEquals(0,find(a.getWindow().getDecorView(),EditText.class).size());
+            assertTrue((a.getWindow().getAttributes().flags&WindowManager.LayoutParams.FLAG_SECURE)!=0);
+            a.finish();
+        });
+    }
     private void emulatorShell(String command) throws Exception {
-        try(android.os.ParcelFileDescriptor fd=ins.getUiAutomation().executeShellCommand(command);java.io.FileInputStream input=new java.io.FileInputStream(fd.getFileDescriptor())) { byte[] buffer=new byte[1024]; while(input.read(buffer)!=-1) { } }
+        try(java.io.InputStream input=new android.os.ParcelFileDescriptor.AutoCloseInputStream(ins.getUiAutomation().executeShellCommand(command))) { byte[] buffer=new byte[1024]; while(input.read(buffer)!=-1) { } }
+    }
+    private void enterTestPin() throws Exception {
+        android.view.accessibility.AccessibilityNodeInfo field=credentialField();
+        assertNotNull("Android PIN field is available",field);
+        field.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_FOCUS);
+        field.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK);
+        android.os.Bundle text=new android.os.Bundle(); text.putCharSequence(android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,"2580");
+        if(!field.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_TEXT,text)) emulatorShell("input text 2580");
+        emulatorShell("input keyevent 66");
     }
     private android.view.accessibility.AccessibilityNodeInfo credentialField() throws Exception {
         for(int attempt=0;attempt<60;attempt++) {
@@ -182,7 +204,7 @@ public class WidgetTests {
             a=ins.startActivitySync(new Intent(ctx,OpenActivity.class).putExtra("widget",widgetId).putExtra("item",Store.items(data).getJSONObject(0).getString("id")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             Activity opened=a;
             assertNotNull("Biometric authentication offers the device PIN",credentialField());
-            emulatorShell("input text 2580"); emulatorShell("input keyevent 66");
+            enterTestPin();
             for(int n=0;n<60;n++) { final boolean[] ready={false}; ins.runOnMainSync(() -> ready[0]=!find(opened.getWindow().getDecorView(),EditText.class).isEmpty()); if(ready[0]) break; android.os.SystemClock.sleep(100); }
             ins.runOnMainSync(() -> { assertEquals("Melk",find(opened.getWindow().getDecorView(),EditText.class).get(0).getText().toString()); opened.finish(); });
         } finally { if(a!=null && !a.isFinishing()) { Activity target=a; ins.runOnMainSync(target::finish); } emulatorShell("locksettings clear --old 2580"); }
@@ -199,12 +221,14 @@ public class WidgetTests {
             Activity opened=a;
             ins.runOnMainSync(() -> assertEquals(0,find(opened.getWindow().getDecorView(),EditText.class).size()));
             assertNotNull("Android credential screen appears",credentialField());
-            emulatorShell("input text 2580"); emulatorShell("input keyevent 66");
+            enterTestPin();
             for(int n=0;n<60;n++) { final boolean[] ready={false}; ins.runOnMainSync(() -> ready[0]=!find(opened.getWindow().getDecorView(),EditText.class).isEmpty()); if(ready[0]) break; android.os.SystemClock.sleep(100); }
             ins.runOnMainSync(() -> {
                 assertEquals("Melk",find(opened.getWindow().getDecorView(),EditText.class).get(0).getText().toString());
                 ins.callActivityOnStop(opened);
                 assertEquals(0,find(opened.getWindow().getDecorView(),EditText.class).size());
+                Store.delete(ctx,widgetId); ins.callActivityOnResume(opened);
+                assertTrue("A removed protected widget cannot reopen cached content",opened.isFinishing());
                 opened.finish();
             });
         } finally { if(a!=null && !a.isFinishing()) { Activity target=a; ins.runOnMainSync(target::finish); } emulatorShell("locksettings clear --old 2580"); }
