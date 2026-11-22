@@ -65,8 +65,22 @@ Na een push naar `main` of een handmatige start onder **Actions → Android APK 
 
 ## Eerste versie
 
-Versie 0.2.4. De startschermformaten en compacte weergave zijn op een Android 15-emulator gecontroleerd. De volledige selectie en het openen van een Samsung-notitie worden aanvullend op de S24 gecontroleerd. Zeer kleine widgets en lange notities kunnen tekst afkappen; de widget is in beide richtingen schaalbaar.
+Versie 0.3.0. De startschermformaten en compacte weergave zijn op een Android 15-emulator gecontroleerd. Zeer kleine widgets en lange notities kunnen tekst afkappen; de widget is in beide richtingen schaalbaar.
 
 Namen zijn optioneel. Laat de naam van een snelkoppeling leeg om de zichtbare titel te verbergen. Pictogrammen blijven naar keuze zichtbaar en de snelkoppeling blijft aanklikbaar. Ook de widgetnaam in de app mag leeg blijven; alleen de beheerlijst gebruikt dan een nummer om widgets uit elkaar te houden.
 
 Nieuwe widgets stellen standaard 1 kolom voor. Een eerder opgeslagen kolomkeuze blijft behouden.
+
+## Widget beveiligen
+
+Open de widgetinstellingen, ga naar **Beveiliging** en kies:
+
+- **Geen vergrendeling**.
+- **Pincode / schermvergrendeling**: Android vraagt de bestaande ontgrendeling van je telefoon.
+- **Vingerafdruk of pincode**: Android biedt sterke biometrie, zoals de vingerafdruk op de S24, en de bestaande telefoonontgrendeling als alternatief.
+
+Er wordt geen nieuwe pincode aangemaakt en foscwidgets ontvangt geen pincode of vingerafdrukgegevens. Voor inschakelen moet een veilige telefoonvergrendeling ingesteld zijn. Op oudere Android-versies gebruikt de app de telefoonontgrendeling.
+
+Elke beveiligde widget vraagt bij het openen om ontgrendeling. Ook de widgetinstellingen zijn beschermd, zodat je de beveiliging niet zonder ontgrendelen kunt uitschakelen. Een beveiligde eigen notitie toont geen inhoud op het startscherm. Bij verlaten van de app verdwijnt de beveiligde inhoud en is opnieuw ontgrendelen nodig; systeemschermopnamen van beveiligde schermen worden geblokkeerd.
+
+Dit beveiligt toegang via foscwidgets. Een gekoppelde app, website of bestand kan daarnaast via zijn eigen app worden geopend en houdt zijn eigen beveiliging. Het is geen algemene appvergrendeling of versleutelde bestandskluis.

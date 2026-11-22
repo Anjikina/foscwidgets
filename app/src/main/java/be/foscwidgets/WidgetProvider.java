@@ -33,6 +33,7 @@ public class WidgetProvider extends AppWidgetProvider {
     }
     static RemoteViews render(Context c,int id) {
         JSONObject o = Store.get(c,id); JSONArray a = Store.items(o);
+        boolean locked=WidgetSecurity.mode(o)!=0;
         RemoteViews root = new RemoteViews(c.getPackageName(),R.layout.widget); root.removeAllViews(R.id.items);
         int columns = Math.max(1,Math.min(4,o.optInt("columns",1)));
         android.os.Bundle options=AppWidgetManager.getInstance(c).getAppWidgetOptions(id);
@@ -58,7 +59,7 @@ public class WidgetProvider extends AppWidgetProvider {
                 JSONObject item=a.optJSONObject(n);
                 if(n>=total || item==null) { cell.setViewVisibility(R.id.cell,View.INVISIBLE); row.addView(R.id.row,cell); continue; }
                 String label=item.optString("label");
-                if((!compact || label.isEmpty()) && "note".equals(item.optString("type")) && !item.optString("value").isEmpty()) label += (label.isEmpty()?"":"\n")+item.optString("value");
+                if(!locked && (!compact || label.isEmpty()) && "note".equals(item.optString("type")) && !item.optString("value").isEmpty()) label += (label.isEmpty()?"":"\n")+item.optString("value");
                 cell.setTextViewText(R.id.label,label); cell.setTextColor(R.id.label,color); cell.setTextViewTextSize(R.id.label,android.util.TypedValue.COMPLEX_UNIT_SP,Math.max(10,Math.min(28,o.optInt("size",16))));
                 cell.setViewVisibility(R.id.label,label.isEmpty()?View.GONE:View.VISIBLE);
                 cell.setContentDescription(R.id.cell,item.optString("label").isEmpty()?("note".equals(item.optString("type"))||"shortcut".equals(item.optString("type"))?"Notitie openen":"Snelkoppeling openen"):item.optString("label"));

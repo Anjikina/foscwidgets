@@ -13,11 +13,11 @@ import android.widget.*;
 import org.json.*;
 import java.util.*;
 
-public class ConfigureActivity extends Activity {
+public class ConfigureActivity extends ProtectedWidgetActivity {
     private int widgetId;
     private JSONObject data;
     private EditText title,color,size;
-    private Spinner columns;
+    private Spinner columns,security;
     private CheckBox icons,edit;
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
@@ -26,16 +26,20 @@ public class ConfigureActivity extends Activity {
         int[] ids=WidgetProvider.allIds(this);
         boolean valid=false; for(int id:ids) if(id==widgetId) valid=true;
         if(!valid) { finish(); return; }
+        protectWidget(widgetId,() -> loadSettings(b));
+    }
+    private void loadSettings(Bundle b) {
         try { data=b!=null?new JSONObject(b.getString("draft")):Store.get(this,widgetId); } catch(Exception e) { data=Store.get(this,widgetId); }
         render();
     }
-    @Override protected void onSaveInstanceState(Bundle b) { capture(); b.putString("draft",data.toString()); super.onSaveInstanceState(b); }
+    @Override protected void onSaveInstanceState(Bundle b) { if(data!=null) { capture(); b.putString("draft",data.toString()); } super.onSaveInstanceState(b); }
     private void capture() {
         if(title==null) return;
         try {
             data.put("title",title.getText().toString().trim()); data.put("color",color.getText().toString().trim());
             int n; try { n=Integer.parseInt(size.getText().toString()); } catch(Exception e) { n=16; }
             data.put("size",Math.max(10,Math.min(28,n))); data.put("columns",columns.getSelectedItemPosition()+1); data.put("icons",icons.isChecked()); data.put("edit",edit.isChecked());
+            data.put("lock",security.getSelectedItemPosition());
         } catch(JSONException e) { throw new IllegalStateException(e); }
     }
     private void render() {
@@ -67,6 +71,9 @@ public class ConfigureActivity extends Activity {
         Ui.button(this,p,"Kleur kiezen",v -> new AlertDialog.Builder(this).setTitle("Tekstkleur").setItems(new String[]{"Wit","Zwart","Donkergroen","Geel","Lichtblauw"},(d,n) -> color.setText(new String[]{"#FFFFFF","#111111","#0D6B65","#FFE082","#81D4FA"}[n])).show());
         icons=new CheckBox(this); icons.setText("Pictogrammen tonen"); icons.setChecked(data.optBoolean("icons",false)); p.addView(icons);
         edit=new CheckBox(this); edit.setText("Link ‘Bewerken’ op de widget tonen"); edit.setChecked(data.optBoolean("edit",true)); p.addView(edit);
+        Ui.text(this,p,"Beveiliging",20);
+        security=new Spinner(this); security.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Geen vergrendeling","Pincode / schermvergrendeling","Vingerafdruk of pincode"})); security.setSelection(WidgetSecurity.mode(data)); p.addView(security);
+        Ui.text(this,p,"Gebruikt de ontgrendeling die op je telefoon is ingesteld. Bij beveiligde widgets wordt de notitietekst op het startscherm verborgen. De widgetinstellingen worden ook beveiligd. Dit beveiligt het openen via foscwidgets; andere apps houden hun eigen toegang en beveiliging.",14);
         Ui.text(this,p,"Tip: met 1–4 items begin je overzichtelijk. Vergroot de widget op je startscherm voor meer items of langere notities.",14);
         Ui.button(this,p,"Opslaan",v -> save());
         Ui.button(this,p,"Annuleren",v -> finish());
@@ -76,6 +83,7 @@ public class ConfigureActivity extends Activity {
         String c=data.optString("color");
         if(!c.matches("#[0-9a-fA-F]{6}")) { color.setError("Gebruik bijvoorbeeld #FFFFFF"); return; }
         if(Store.items(data).length()==0) { Ui.toast(this,"Voeg eerst minstens één snelkoppeling toe."); return; }
+        if(WidgetSecurity.mode(data)!=0 && !WidgetSecurity.deviceIsSecure(this)) { Ui.toast(this,"Stel eerst een pincode of schermvergrendeling in bij de instellingen van je telefoon."); return; }
         try {
             Store.save(this,widgetId,data); WidgetProvider.update(this,widgetId);
             setResult(RESULT_OK,new Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,widgetId)); finish();
@@ -163,6 +171,9 @@ public class ConfigureActivity extends Activity {
     }
     @Override protected void onActivityResult(int request,int result,Intent intent) {
         super.onActivityResult(request,result,intent);
+        if(request==40 || request==41 || request==42) whenUnlocked(() -> receivePickerResult(request,result,intent));
+    }
+    private void receivePickerResult(int request,int result,Intent intent) {
         if(request==42 && result==RESULT_OK && intent!=null) {
             try {
                 String uuid=intent.getStringExtra("application/sdocuuid");

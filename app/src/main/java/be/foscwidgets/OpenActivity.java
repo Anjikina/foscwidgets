@@ -8,7 +8,7 @@ import android.text.InputType;
 import android.widget.*;
 import org.json.*;
 
-public class OpenActivity extends Activity {
+public class OpenActivity extends ProtectedWidgetActivity {
     private int widgetId;
     private String itemId;
     private EditText note;
@@ -16,6 +16,9 @@ public class OpenActivity extends Activity {
     @Override public void onCreate(Bundle b) {
         super.onCreate(b); widgetId=getIntent().getIntExtra("widget",-1); itemId=getIntent().getStringExtra("item");
         if(!Store.exists(this,widgetId)) { finish(); return; }
+        protectWidget(widgetId,() -> openItem(b));
+    }
+    private void openItem(Bundle b) {
         JSONObject item=find(Store.get(this,widgetId)); if(item==null) { finish(); return; }
         String type=item.optString("type"),value=item.optString("value");
         if("note".equals(type)) {

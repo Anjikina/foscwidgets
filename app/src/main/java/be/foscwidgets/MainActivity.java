@@ -25,7 +25,7 @@ public class MainActivity extends Activity {
             Ui.button(this,page,(title.isEmpty()?"Widget "+(n+1):title)+" · bewerken",v -> startActivity(new Intent(this,ConfigureActivity.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,id)));
         }
         Ui.text(this,page,"Tips",21);
-        Ui.text(this,page,"• Kies 1×1 voor één snelkoppeling.\n• Houd een widget ingedrukt en sleep de randen om het formaat te wijzigen.\n• Op een kleine widget wordt ‘Bewerken’ automatisch verborgen; aanpassen kan via deze app.\n• Kies Samsung Notes om een bestaande Samsung-notitie te koppelen.\n• Bestanden blijven op hun oorspronkelijke plek. Na verwijderen of verplaatsen moet je ze mogelijk opnieuw kiezen.\n\nfoscwidgets 0.2.4 · Geen account of abonnement nodig.",15);
+        Ui.text(this,page,"• Kies 1×1 voor één snelkoppeling.\n• Houd een widget ingedrukt en sleep de randen om het formaat te wijzigen.\n• Op een kleine widget wordt ‘Bewerken’ automatisch verborgen; aanpassen kan via deze app.\n• Kies Samsung Notes om een bestaande Samsung-notitie te koppelen.\n• Bestanden blijven op hun oorspronkelijke plek. Na verwijderen of verplaatsen moet je ze mogelijk opnieuw kiezen.\n\nfoscwidgets 0.3.0 · Geen account of abonnement nodig.",15);
     }
     private void addWidget(Class<?> type) {
             AppWidgetManager m=AppWidgetManager.getInstance(this);
